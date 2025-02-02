@@ -743,7 +743,7 @@ export default function Store() {
               <div className="space-y-4">
                 <h3 className="text-xl font-bold">📍 Ubicación</h3>
                 <p className="text-muted-foreground">
-                  Dasieloski Store<br />
+                  99-Store<br />
                   La Habana, Cuba 🇨🇺<br />
                   Entregas en toda La Habana 🚚
                 </p>
@@ -769,7 +769,7 @@ export default function Store() {
             </div>
             <div className="mt-12 pt-8 border-t text-center">
               <p className="text-muted-foreground">
-                © 2024 Dasieloski Store ✨ Todos los derechos reservados 🎉
+                © 2025 99-Store ✨ Todos los derechos reservados 🎉
               </p>
             </div>
           </div>
