@@ -51,6 +51,7 @@ export default function ProductsPage() {
   const [isOpen, setIsOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [formData, setFormData] = useState({
+    id: '',
     name: '',
     price: '',
     category: '',
@@ -113,6 +114,11 @@ export default function ProductsPage() {
     setSuccess(null)
 
     const submitData = new FormData()
+
+    if (editingProduct) {
+      submitData.append('id', editingProduct.id)
+    }
+
     submitData.append('name', formData.name)
     submitData.append('price', formData.price)
     submitData.append('category', formData.category)
@@ -136,7 +142,7 @@ export default function ProductsPage() {
           setProducts(products.map(prod => prod.id === updatedProduct.id ? updatedProduct : prod))
           setIsOpen(false)
           setEditingProduct(null)
-          setFormData({ name: '', price: '', category: '', description: '', emoji: '', detailedDescription: '', image: null })
+          setFormData({ id: '', name: '', price: '', category: '', description: '', emoji: '', detailedDescription: '', image: null })
           setSuccess('Producto actualizado exitosamente')
         } else {
           const errorData = await res.json()
@@ -154,7 +160,7 @@ export default function ProductsPage() {
           const newProduct = await res.json()
           setProducts([...products, newProduct])
           setIsOpen(false)
-          setFormData({ name: '', price: '', category: '', description: '', emoji: '', detailedDescription: '', image: null })
+          setFormData({ id: '', name: '', price: '', category: '', description: '', emoji: '', detailedDescription: '', image: null })
           setSuccess('Producto creado exitosamente')
         } else {
           const errorData = await res.json()
@@ -197,7 +203,7 @@ export default function ProductsPage() {
         <h1 className="text-3xl font-bold">📦 Gestión de Productos</h1>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => { setIsOpen(true); setEditingProduct(null); }}>
+            <Button onClick={() => { setIsOpen(true); setEditingProduct(null); setFormData({ id: '', name: '', price: '', category: '', description: '', emoji: '', detailedDescription: '', image: null }) }}>
               ✨ Nuevo Producto
             </Button>
           </DialogTrigger>
@@ -345,7 +351,7 @@ export default function ProductsPage() {
                 <CardContent className="p-0">
                   <div className="relative aspect-square">
                     <Image
-                      src={product.image}
+                      src={product.image || "/placeholder.svg"}
                       alt={product.name}
                       fill
                       className="object-cover"
@@ -378,9 +384,10 @@ export default function ProductsPage() {
                     onClick={() => {
                       setEditingProduct(product)
                       setFormData({
+                        id: product.id,
                         name: product.name,
                         price: product.price.toString(),
-                        category: product.categoryId,
+                        category: product.category.id,
                         description: product.description,
                         emoji: product.emoji,
                         detailedDescription: product.detailedDescription || '',
