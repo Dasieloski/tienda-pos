@@ -1,6 +1,6 @@
 "use client"
 import type React from "react"
-import {  useMemo } from "react"
+import { useMemo } from "react"
 //import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,7 @@ import Image from "next/image"
 import { Separator } from "@/components/ui/separator"
 
 export default function CheckoutPage() {
- // const router = useRouter()
+  // const router = useRouter()
   const { cart, getCartTotal, clearCart, removeFromCart } = useCart()
 
   const total = useMemo(() => {
@@ -65,7 +65,7 @@ export default function CheckoutPage() {
       return
     }
 
-    let message = "🛍️ *Nuevo Pedido en Dasieloski Store*\n\n"
+    let message = "🛍️ *Nuevo Pedido en 99-Store*\n\n"
     message += "👤 *Datos del Cliente:*\n"
     message += `- Nombre: ${name}\n`
     message += `- Teléfono: ${phone}\n\n`
@@ -87,7 +87,7 @@ export default function CheckoutPage() {
       const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodedMessage}`
       console.log("URL de WhatsApp a abrir:", whatsappURL)
       const whatsappWindow = window.open(whatsappURL, "_blank")
-      
+
       if (whatsappWindow) {
         console.log("WhatsApp abierto correctamente")
       } else {

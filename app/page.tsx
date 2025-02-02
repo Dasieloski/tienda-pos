@@ -309,7 +309,7 @@ export default function Store() {
   // Filtrar productos
   const filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategory === "todos" ||
-      product.category.name.toLowerCase() === selectedCategory
+      product.category.id === selectedCategory
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase())
     return matchesCategory && matchesSearch

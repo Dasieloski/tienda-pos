@@ -13,12 +13,30 @@ export const config = {
 }
 
 export async function GET(request: Request) {
-    try {
-        const productos = await prisma.product.findMany({
-            include: { category: true },
-        })
+    const { searchParams } = new URL(request.url)
+    const category = searchParams.get('category')
 
-        // Verificar si se encontraron productos
+    try {
+        let productos
+
+        if (category) {
+            productos = await prisma.product.findMany({
+                where: {
+                    category: {
+                        name: {
+                            equals: category,
+                            mode: 'insensitive'
+                        }
+                    }
+                },
+                include: { category: true },
+            })
+        } else {
+            productos = await prisma.product.findMany({
+                include: { category: true },
+            })
+        }
+
         if (!productos || productos.length === 0) {
             return NextResponse.json({ error: 'No se encontraron productos' }, { status: 404 })
         }

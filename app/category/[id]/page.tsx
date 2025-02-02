@@ -56,7 +56,38 @@ const products: Record<string, Product[]> = {
       emoji: "👟"
     }
   ],
+  electrodomesticos: [
+    {
+      id: 4,
+      name: "Lavadora Super Clean",
+      price: 499.99,
+      image: "/lavadora.svg?height=400&width=400",
+      category: "Electrodomésticos",
+      description: "Lavadora de alta eficiencia",
+      emoji: "🧺"
+    }
+  ],
   // ... más productos por categoría
+}
+
+const categoryEmojis: Record<string, string> = {
+  tecnologia: "🚀",
+  deportes: "⚡",
+  electrodomesticos: "🔌",
+  comida: "🍕",
+  musica: "🎵",
+  fotografia: "📸",
+  moda: "👗"
+}
+
+const categoryNames: Record<string, string> = {
+  tecnologia: "Tecnología",
+  deportes: "Deportes",
+  electrodomesticos: "Electrodomésticos",
+  comida: "Comida",
+  musica: "Música",
+  fotografia: "Fotografía",
+  moda: "Moda"
 }
 
 export default function CategoryPage({ params }: { params: { id: string } }) {
@@ -65,23 +96,7 @@ export default function CategoryPage({ params }: { params: { id: string } }) {
   const [isHovered, setIsHovered] = React.useState<number | null>(null)
 
   const categoryProducts = products[params.id] || []
-  const categoryEmojis: Record<string, string> = {
-    tecnologia: "🚀",
-    deportes: "⚡",
-    comida: "🍕",
-    musica: "🎵",
-    fotografia: "📸",
-    moda: "👗"
-  }
-
-  const categoryNames: Record<string, string> = {
-    tecnologia: "Tecnología",
-    deportes: "Deportes",
-    comida: "Comida",
-    musica: "Música",
-    fotografia: "Fotografía",
-    moda: "Moda"
-  }
+  const total = cart.reduce((sum, item) => sum + item.price, 0)
 
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -96,16 +111,9 @@ export default function CategoryPage({ params }: { params: { id: string } }) {
 
   // Remove from cart
   const removeFromCart = (productId: number) => {
-    const index = cart.findIndex(item => item.id === productId)
-    if (index > -1) {
-      const newCart = [...cart]
-      newCart.splice(index, 1)
-      setCart(newCart)
-    }
+    const newCart = cart.filter(item => item.id !== productId)
+    setCart(newCart)
   }
-
-  // Calculate total
-  const total = cart.reduce((sum, item) => sum + item.price, 0)
 
   React.useEffect(() => {
     document.documentElement.classList.add('dark')
@@ -221,58 +229,62 @@ export default function CategoryPage({ params }: { params: { id: string } }) {
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <AnimatePresence>
-            {categoryProducts.map((product) => (
-              <motion.div
-                key={product.id}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Card 
-                  className="overflow-hidden group"
-                  onMouseEnter={() => setIsHovered(product.id)}
-                  onMouseLeave={() => setIsHovered(null)}
+            {categoryProducts.length === 0 ? (
+              <p className="text-center col-span-full">No hay productos disponibles en esta categoría.</p>
+            ) : (
+              categoryProducts.map((product) => (
+                <motion.div
+                  key={product.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.3 }}
                 >
-                  <CardContent className="p-0">
-                    <div className="relative aspect-square">
-                      <Image
-                        src={product.image}
-                        alt={product.name}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-110"
-                      />
-                      {isHovered === product.id && (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="absolute inset-0 bg-black/60 flex items-center justify-center p-4"
-                        >
-                          <p className="text-white text-center">{product.description}</p>
-                        </motion.div>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">{product.emoji}</span>
-                        <h2 className="font-semibold text-lg">{product.name}</h2>
+                  <Card 
+                    className="overflow-hidden group"
+                    onMouseEnter={() => setIsHovered(product.id)}
+                    onMouseLeave={() => setIsHovered(null)}
+                  >
+                    <CardContent className="p-0">
+                      <div className="relative aspect-square">
+                        <Image
+                          src={product.image}
+                          alt={product.name}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-110"
+                        />
+                        {isHovered === product.id && (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="absolute inset-0 bg-black/60 flex items-center justify-center p-4"
+                          >
+                            <p className="text-white text-center">{product.description}</p>
+                          </motion.div>
+                        )}
                       </div>
-                      <p className="text-muted-foreground text-sm">{product.category}</p>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between items-center">
-                    <span className="font-bold">💰 ${product.price}</span>
-                    <Button
-                      variant="default"
-                      onClick={() => addToCart(product)}
-                    >
-                      🛒 Agregar al carrito
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </motion.div>
-            ))}
+                      <div className="p-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">{product.emoji}</span>
+                          <h2 className="font-semibold text-lg">{product.name}</h2>
+                        </div>
+                        <p className="text-muted-foreground text-sm">{product.category}</p>
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-between items-center">
+                      <span className="font-bold">💰 ${product.price}</span>
+                      <Button
+                        variant="default"
+                        onClick={() => addToCart(product)}
+                      >
+                        🛒 Agregar al carrito
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </motion.div>
+              ))
+            )}
           </AnimatePresence>
         </div>
       </main>
