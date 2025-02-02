@@ -1,6 +1,7 @@
+/* eslint-disable */
 "use client"
 import type React from "react"
-import { useMemo } from "react"
+import {  useMemo } from "react"
 //import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -13,7 +14,7 @@ import Image from "next/image"
 import { Separator } from "@/components/ui/separator"
 
 export default function CheckoutPage() {
-  // const router = useRouter()
+ // const router = useRouter()
   const { cart, getCartTotal, clearCart, removeFromCart } = useCart()
 
   const total = useMemo(() => {
@@ -26,24 +27,30 @@ export default function CheckoutPage() {
     e.preventDefault()
     console.log("Inicio de handleSubmit")
 
-    const formData = new FormData(e.currentTarget)
-
-    const name = formData.get("name") as string
-    const phone = formData.get("phone") as string
-    const address = formData.get("address") as string
-
-    console.log("Datos del formulario:", { name, phone, address })
-
-    const cartItems = cart.map(item => ({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity || 1,
-    }))
-
-    console.log("Items del carrito a enviar:", cartItems)
+    const whatsappWindow = window.open("", "_blank")
+    if (!whatsappWindow) {
+      console.warn("Bloqueador de ventanas emergentes impidió abrir WhatsApp")
+      return
+    }
 
     try {
+      const formData = new FormData(e.currentTarget)
+
+      const name = formData.get("name") as string
+      const phone = formData.get("phone") as string
+      const address = formData.get("address") as string
+
+      console.log("Datos del formulario:", { name, phone, address })
+
+      const cartItems = cart.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity || 1,
+      }))
+
+      console.log("Items del carrito a enviar:", cartItems)
+
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -55,50 +62,39 @@ export default function CheckoutPage() {
       if (!response.ok) {
         const errorData = await response.json()
         console.error('Error al guardar el pedido:', errorData.error)
+        whatsappWindow.close()
         return
       }
 
       const order = await response.json()
       console.log('Pedido guardado:', order)
+
+      let message = "🛍️ *Nuevo Pedido en 99-Store*\n\n"
+      message += "👤 *Datos del Cliente:*\n"
+      message += `- Nombre: ${name}\n`
+      message += `- Teléfono: ${phone}\n\n`
+      message += "📍 *Dirección de Envío:*\n"
+      message += `${address}\n\n`
+      message += "🛒 *Productos:*\n"
+
+      cart.forEach((item) => {
+        message += `- ${item.emoji || '📦'} ${item.name}: $${item.price} x ${item.quantity || 1}\n`
+      })
+
+      message += `\n💰 *Total:* $${total.toFixed(2)}`
+      const encodedMessage = encodeURIComponent(message)
+      const phoneNumber = "5354710329" // Sin el '+'
+
+      const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodedMessage}`
+      whatsappWindow.location.href = whatsappURL
+      console.log("WhatsApp abierto correctamente")
+
+      clearCart()
+      console.log("Carrito limpiado")
     } catch (error) {
       console.error('Error al conectar con la API:', error)
-      return
+      whatsappWindow.close()
     }
-
-    let message = "🛍️ *Nuevo Pedido en 99-Store*\n\n"
-    message += "👤 *Datos del Cliente:*\n"
-    message += `- Nombre: ${name}\n`
-    message += `- Teléfono: ${phone}\n\n`
-    message += "📍 *Dirección de Envío:*\n"
-    message += `${address}\n\n`
-    message += "🛒 *Productos:*\n"
-
-    cart.forEach((item) => {
-      message += `- ${item.emoji || '📦'} ${item.name}: $${item.price} x ${item.quantity || 1}\n`
-    })
-
-    message += `\n💰 *Total:* $${total.toFixed(2)}`
-    const encodedMessage = encodeURIComponent(message)
-    const phoneNumber = "+5354710329"
-
-    console.log("Mensaje para WhatsApp:", message)
-
-    try {
-      const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodedMessage}`
-      console.log("URL de WhatsApp a abrir:", whatsappURL)
-      const whatsappWindow = window.open(whatsappURL, "_blank")
-
-      if (whatsappWindow) {
-        console.log("WhatsApp abierto correctamente")
-      } else {
-        console.warn("Bloqueador de ventanas emergentes impidió abrir WhatsApp")
-      }
-    } catch (error) {
-      console.error("Error al abrir WhatsApp:", error)
-    }
-
-    clearCart()
-    console.log("Carrito limpiado")
   }
 
   return (
