@@ -8,7 +8,6 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// Usuario (Admin)
 model User {
   id       Int     @id @default(autoincrement())
   email    String  @unique
@@ -17,48 +16,43 @@ model User {
   tokens   Token[]
 }
 
-enum Role {
-  ADMIN
-}
-
-// Categoría
 model Category {
   id          String    @id
   name        String    @unique
   emoji       String
   gradient    String
   description String
-  products    Product[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  products    Product[]
 
   @@map("categories")
 }
 
-// Producto
 model Product {
-  id                  String   @id @default(cuid())
+  id                  String          @id @default(cuid())
   name                String
-  price               Decimal  @db.Decimal(10, 2)
+  price               Decimal         @db.Decimal(10, 2)
   image               String
   categoryId          String
   description         String
   emoji               String
-  detailedDescription String?  @db.Text
-  stock               Int      @default(0)
-  category            Category @relation(fields: [categoryId], references: [id])
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  detailedDescription String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  stock               Int             @default(0)
+  SaleProduct         SaleProduct[]
+  almacen_ventas      almacen_ventas?
   Offer               Offer[]
+  category            Category        @relation(fields: [categoryId], references: [id])
 
   @@map("products")
 }
 
-// Moneda
 model Currency {
   id           String   @id @default(cuid())
-  code         String   @unique // USD, CUP, MLC, EUR
-  symbol       String // $, €
+  code         String   @unique
+  symbol       String
   exchangeRate Decimal  @db.Decimal(10, 2)
   isDefault    Boolean  @default(false)
   createdAt    DateTime @default(now())
@@ -82,23 +76,16 @@ model Offer {
   startDate   DateTime
   endDate     DateTime
   isActive    Boolean  @default(true)
-  title       String?
-  description String?
-  emoji       String?
-  product     Product  @relation(fields: [productId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  description String?
+  emoji       String?
+  title       String?
+  product     Product  @relation(fields: [productId], references: [id])
 
   @@map("offers")
 }
 
-enum OrderStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
-}
-
-//productos del carrito a mostrar en el panel de admin
 model Order {
   id              Int         @id @default(autoincrement())
   customerName    String
@@ -116,6 +103,63 @@ model OrderItem {
   name      String
   price     Float
   quantity  Int
-  order     Order  @relation(fields: [orderId], references: [id])
   orderId   Int
+  order     Order  @relation(fields: [orderId], references: [id])
+}
+
+model ReturnRequest {
+  id        Int          @id @default(autoincrement())
+  saleId    Int
+  products  Json
+  total     Float
+  status    ReturnStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime
+  Sale      Sale         @relation(fields: [saleId], references: [id])
+}
+
+model Sale {
+  id            Int             @id @default(autoincrement())
+  total         Float
+  paymentMethod String
+  status        String          @default("completed")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime
+  ReturnRequest ReturnRequest[]
+  SaleProduct   SaleProduct[]
+}
+
+model SaleProduct {
+  id        Int     @id @default(autoincrement())
+  saleId    Int
+  productId String
+  quantity  Int
+  price     Float
+  products  Product @relation(fields: [productId], references: [id])
+  Sale      Sale    @relation(fields: [saleId], references: [id])
+}
+
+model almacen_ventas {
+  id        String   @id
+  productId String   @unique
+  stock     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  products  Product  @relation(fields: [productId], references: [id])
+}
+
+enum Role {
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum ReturnStatus {
+  PENDING
+  AUTHORIZED
+  REJECTED
 }

@@ -44,47 +44,25 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 
-// Expanded mock data
-const mockProducts = [
-  {
-    id: 1,
-    name: "Smartphone XYZ",
-    image: "/placeholder.svg",
-    category: "📱 Electrónicos",
-    price: 599.99,
-    stock: 5,
-  },
-  {
-    id: 2,
-    name: "Laptop Pro",
-    image: "/placeholder.svg",
-    category: "💻 Computadoras",
-    price: 1299.99,
-    stock: 25,
-  },
-  {
-    id: 3,
-    name: "Auriculares Gaming",
-    image: "/placeholder.svg",
-    category: "🎮 Gaming",
-    price: 99.99,
-    stock: 8,
-  },
-  {
-    id: 4,
-    name: "Smart TV 55'",
-    image: "/placeholder.svg",
-    category: "📺 Televisores",
-    price: 799.99,
-    stock: 15,
-  },
-]
+interface Category {
+  name: string
+}
 
-interface StockDialogProps {
-  productId: number
-  currentStock: number
-  productName: string
-  onUpdate: (newStock: number) => void
+interface Product {
+  id: number
+  name: string
+  image: string
+  category: Category
+  price: number
+  stock: number
+}
+
+interface FilterState {
+  category: string
+  minPrice: number
+  maxPrice: number
+  stockStatus: string
+  priceRange: [number, number]
 }
 
 const LowStockIndicator = () => {
@@ -113,7 +91,7 @@ function StockDialog({ productId, currentStock, productName, onUpdate }: StockDi
 
   const handleUpdate = () => {
     onUpdate(newStock)
-    // Here you would typically make an API call to update the stock
+    // Aquí normalmente harías una llamada a la API para actualizar el stock
   }
 
   return (
@@ -216,34 +194,26 @@ function MoveToStoreDialog({ productId, productName, currentStock, onMove }: Mov
   )
 }
 
-interface FilterState {
-  category: string
-  minPrice: number
-  maxPrice: number
-  stockStatus: string
-  priceRange: [number, number]
-}
-
 export default function GranAlmacen() {
-  const [products, setProducts] = useState(mockProducts)
+  const [products, setProducts] = useState<Product[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [sortConfig, setSortConfig] = useState({ key: "name", direction: "asc" })
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(5)
+  const [itemsPerPage, setItemsPerPage] = useState(25)
 
   // Estado para los filtros
   const [filters, setFilters] = useState<FilterState>({
     category: "todos",
     minPrice: 0,
-    maxPrice: 2000,
+    maxPrice: 2000000,
     stockStatus: "todos",
-    priceRange: [0, 2000],
+    priceRange: [0, 99999999],
   })
 
   // Obtener valores únicos para los filtros
-  const categories = Array.from(new Set(products.map((product) => product.category)))
-  const maxProductPrice = Math.max(...products.map((p) => p.price))
+  const categories = Array.from(new Set(products.map((product) => product.category.name)))
+  const maxProductPrice = Math.max(...products.map((p) => p.price), 2000) // Asegura un valor máximo por defecto
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters((prev) => ({
@@ -270,10 +240,30 @@ export default function GranAlmacen() {
     return count
   }
 
+  // Obtener productos desde la API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch('/api/products', { method: 'GET' }) // Cambiado de '/api/stock' a '/api/products'
+        if (!res.ok) {
+          throw new Error('Error al obtener los productos')
+        }
+        const data = await res.json()
+        console.log('Productos recibidos:', data) // Para depuración
+        setProducts(data)
+      } catch (error: any) {
+        console.error('Error al cargar los productos:', error)
+        toast.error('Error al cargar los productos: ' + error.message)
+      }
+    }
+
+    fetchProducts()
+  }, [])
+
   const filteredAndSortedProducts = products
     .filter((product) => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesCategory = filters.category === "todos" || product.category === filters.category
+      const matchesCategory = filters.category === "todos" || product.category.name === filters.category
       const matchesPrice = product.price >= filters.priceRange[0] && product.price <= filters.priceRange[1]
       const matchesStock =
         filters.stockStatus === "todos" ||
@@ -284,25 +274,92 @@ export default function GranAlmacen() {
     })
     .sort((a, b) => {
       if (sortConfig.direction === "asc") {
-        return a[sortConfig.key] > b[sortConfig.key] ? 1 : -1
+        if (a[sortConfig.key as keyof Product] < b[sortConfig.key as keyof Product]) return -1
+        if (a[sortConfig.key as keyof Product] > b[sortConfig.key as keyof Product]) return 1
+        return 0
       }
-      return a[sortConfig.key] < b[sortConfig.key] ? 1 : -1
+      if (a[sortConfig.key as keyof Product] > b[sortConfig.key as keyof Product]) return -1
+      if (a[sortConfig.key as keyof Product] < b[sortConfig.key as keyof Product]) return 1
+      return 0
     })
 
-  const handleStockUpdate = (productId: number, newStock: number) => {
-    setProducts(products.map((product) => (product.id === productId ? { ...product, stock: newStock } : product)))
+  const handleStockUpdate = async (productId: number, newStock: number) => {
+    // Validar que newStock es un número válido
+    if (isNaN(newStock) || newStock < 0) {
+      toast.error('Por favor, ingresa un número válido para el stock.')
+      return
+    }
+
+    try {
+      const res = await fetch('/api/stock', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: productId, stock: newStock }),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Error al actualizar el stock')
+      }
+
+      // Encontrar el producto actual
+      const currentProduct = products.find(p => p.id === productId)
+      if (!currentProduct) {
+        throw new Error('Producto no encontrado')
+      }
+
+      // Actualizar solo el stock manteniendo el resto de la información del producto
+      setProducts(products.map((product) =>
+        product.id === productId
+          ? {
+            ...product, // Mantener toda la información existente del producto
+            stock: newStock // Actualizar solo el stock
+          }
+          : product
+      ))
+
+      toast.success(`Stock de ${currentProduct.name} actualizado a ${newStock}`)
+    } catch (error: any) {
+      console.error('Error al actualizar el stock:', error)
+      toast.error(error.message || 'No se pudo actualizar el stock')
+    }
   }
 
-  const handleSort = (key) => {
+  const handleSort = (key: string) => {
     setSortConfig((current) => ({
       key,
       direction: current.key === key && current.direction === "asc" ? "desc" : "asc",
     }))
   }
 
-  const handleMoveToStore = (productId: number, quantity: number) => {
-    setProducts(
-      products.map((product) => {
+  const handleMoveToStore = async (productId: number, quantity: number) => {
+    if (quantity > products.find(p => p.id === productId)?.stock!) {
+      toast.error("No hay suficiente stock disponible")
+      return
+    }
+
+    try {
+      // Realizar la llamada a la API para mover el stock
+      const res = await fetch('/api/stock/move-to-store', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId,
+          quantity
+        })
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Error al mover el stock')
+      }
+
+      // Actualizar el estado local
+      setProducts(products.map((product) => {
         if (product.id === productId) {
           return {
             ...product,
@@ -310,32 +367,34 @@ export default function GranAlmacen() {
           }
         }
         return product
-      }),
-    )
+      }))
 
-    // Aquí irían las llamadas a la API para:
-    // 1. Reducir el stock en el gran almacén
-    // 2. Aumentar el stock en el almacén de ventas
+      toast.success(`${quantity} unidades movidas al almacén de ventas`)
+    } catch (error: any) {
+      console.error('Error al mover el stock:', error)
+      toast.error(error.message || 'No se pudo mover el stock')
+    }
   }
 
-  // Pagination calculations
+  // Cálculos de paginación
   const totalFilteredItems = filteredAndSortedProducts.length
   const totalPages = Math.ceil(totalFilteredItems / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
   const currentItems = filteredAndSortedProducts.slice(startIndex, endIndex)
 
-  // Handle page change
+  // Manejar cambio de página
   const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return
     setCurrentPage(page)
   }
 
-  // Generate page numbers for pagination
+  // Generar números de página para la paginación
   const getPageNumbers = () => {
     const pages = []
     const maxVisiblePages = 5
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
-    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
 
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1)
@@ -369,12 +428,12 @@ export default function GranAlmacen() {
                 </div>
               </div>
 
-              {/* Items per page selector */}
+              {/* Selector de ítems por página */}
               <Select
                 value={String(itemsPerPage)}
                 onValueChange={(value) => {
                   setItemsPerPage(Number(value))
-                  setCurrentPage(1) // Reset to first page when changing items per page
+                  setCurrentPage(1) // Reiniciar a la primera página al cambiar ítems por página
                 }}
               >
                 <SelectTrigger className="w-[180px]">
@@ -436,7 +495,7 @@ export default function GranAlmacen() {
                           max={maxProductPrice}
                           step={10}
                           value={filters.priceRange}
-                          onValueChange={(value) => handleFilterChange("priceRange", value)}
+                          onValueChange={(value) => handleFilterChange("priceRange", value as [number, number])}
                           className="my-4"
                         />
                         <div className="flex justify-between text-sm">
@@ -565,8 +624,12 @@ export default function GranAlmacen() {
                         </motion.div>
                       </TableCell>
                       <TableCell>{product.name}</TableCell>
-                      <TableCell>{product.category}</TableCell>
-                      <TableCell>${product.price.toFixed(2)}</TableCell>
+                      <TableCell>{product.category.name}</TableCell>
+                      <TableCell>
+                        ${typeof product.price === 'string'
+                          ? parseFloat(product.price).toFixed(2)
+                          : Number(product.price).toFixed(2)}
+                      </TableCell>
                       <TableCell>
                         <span className={product.stock < 10 ? "text-red-500 font-bold" : ""}>{product.stock}</span>
                         {product.stock < 10 && <LowStockIndicator />}
@@ -617,7 +680,7 @@ export default function GranAlmacen() {
               </Table>
             </div>
 
-            {/* Pagination */}
+            {/* Paginación */}
             <div className="mt-4 flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
                 Mostrando {startIndex + 1}-{Math.min(endIndex, totalFilteredItems)} de {totalFilteredItems} productos

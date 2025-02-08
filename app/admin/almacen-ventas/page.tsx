@@ -31,42 +31,23 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { toast } from "sonner"
 
-// Mock data for Almacen de Ventas
-const mockProducts = [
-  {
-    id: 1,
-    name: "Smartphone XYZ",
-    image: "/placeholder.svg",
-    category: "📱 Electrónicos",
-    price: 599.99,
-    stock: 3,
-  },
-  {
-    id: 2,
-    name: "Laptop Pro",
-    image: "/placeholder.svg",
-    category: "💻 Computadoras",
-    price: 1299.99,
-    stock: 8,
-  },
-  {
-    id: 3,
-    name: "Auriculares Gaming",
-    image: "/placeholder.svg",
-    category: "🎮 Gaming",
-    price: 99.99,
-    stock: 4,
-  },
-  {
-    id: 4,
-    name: "Smart TV 55'",
-    image: "/placeholder.svg",
-    category: "📺 Televisores",
-    price: 799.99,
-    stock: 6,
-  },
-]
+interface Category {
+  name: string
+}
+
+interface Product {
+  id: string
+  name: string
+  image: string
+  category: Category
+  price: number
+  stock: number
+  almacen_ventas: {
+    stock: number
+  } | null
+}
 
 const LowStockIndicator = () => {
   const [visible, setVisible] = useState(true)
@@ -98,24 +79,24 @@ interface FilterState {
 }
 
 export default function AlmacenVentas() {
-  const [products, setProducts] = useState(mockProducts)
+  const [products, setProducts] = useState<Product[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [sortConfig, setSortConfig] = useState({ key: "name", direction: "asc" })
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(5)
+  const [itemsPerPage, setItemsPerPage] = useState(25)
 
   // Estado para los filtros
   const [filters, setFilters] = useState<FilterState>({
     category: "todos",
     minPrice: 0,
-    maxPrice: 2000,
+    maxPrice: 99999999,
     stockStatus: "todos",
-    priceRange: [0, 2000],
+    priceRange: [0, 99999999],
   })
 
   // Obtener valores únicos para los filtros
-  const categories = Array.from(new Set(products.map((product) => product.category)))
+  const categories = Array.from(new Set(products.map((product) => product.category.name)))
   const maxProductPrice = Math.max(...products.map((p) => p.price))
 
   const handleFilterChange = (key: string, value: any) => {
@@ -146,16 +127,21 @@ export default function AlmacenVentas() {
   const filteredAndSortedProducts = products
     .filter((product) => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesCategory = filters.category === "todos" || product.category === filters.category
+      const matchesCategory = filters.category === "todos" || product.category.name === filters.category
       const matchesPrice = product.price >= filters.priceRange[0] && product.price <= filters.priceRange[1]
       const matchesStock =
         filters.stockStatus === "todos" ||
-        (filters.stockStatus === "bajo" && product.stock < 5) ||
-        (filters.stockStatus === "normal" && product.stock >= 5)
+        (filters.stockStatus === "bajo" && (product.almacen_ventas?.stock || 0) < 2) ||
+        (filters.stockStatus === "normal" && (product.almacen_ventas?.stock || 0) >= 2)
 
       return matchesSearch && matchesCategory && matchesPrice && matchesStock
     })
     .sort((a, b) => {
+      if (sortConfig.key === "stock") {
+        const stockA = a.almacen_ventas?.stock || 0
+        const stockB = b.almacen_ventas?.stock || 0
+        return sortConfig.direction === "asc" ? stockA - stockB : stockB - stockA
+      }
       if (sortConfig.direction === "asc") {
         return a[sortConfig.key] > b[sortConfig.key] ? 1 : -1
       }
@@ -198,6 +184,25 @@ export default function AlmacenVentas() {
 
     return pages
   }
+
+  // Cargar productos
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch('/api/almacen-ventas')
+        if (!res.ok) {
+          throw new Error('Error al cargar los productos')
+        }
+        const data = await res.json()
+        setProducts(data)
+      } catch (error) {
+        console.error('Error:', error)
+        toast.error('Error al cargar los productos')
+      }
+    }
+
+    fetchProducts()
+  }, [])
 
   return (
     <AnimatePresence>
@@ -309,8 +314,8 @@ export default function AlmacenVentas() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="todos">Todos</SelectItem>
-                          <SelectItem value="bajo">Stock Bajo (&lt; 5)</SelectItem>
-                          <SelectItem value="normal">Stock Normal (≥ 5)</SelectItem>
+                          <SelectItem value="bajo">Stock Bajo (&lt; 2)</SelectItem>
+                          <SelectItem value="normal">Stock Normal (≥ 2)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -415,11 +420,17 @@ export default function AlmacenVentas() {
                         </motion.div>
                       </TableCell>
                       <TableCell>{product.name}</TableCell>
-                      <TableCell>{product.category}</TableCell>
-                      <TableCell>${product.price.toFixed(2)}</TableCell>
+                      <TableCell>{product.category.name}</TableCell>
+                     <TableCell>
+                        ${typeof product.price === 'string'
+                          ? parseFloat(product.price).toFixed(2)
+                          : Number(product.price).toFixed(2)}
+                      </TableCell>
                       <TableCell>
-                        <span className={product.stock < 5 ? "text-red-500 font-bold" : ""}>{product.stock}</span>
-                        {product.stock < 5 && <LowStockIndicator />}
+                        <span className={(product.almacen_ventas?.stock || 0) < 5 ? "text-red-500 font-bold" : ""}>
+                          {product.almacen_ventas?.stock || 0}
+                        </span>
+                        {(product.almacen_ventas?.stock || 0) < 5 && <LowStockIndicator />}
                       </TableCell>
                     </motion.tr>
                   ))}
