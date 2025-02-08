@@ -1,0 +1,44 @@
+[33m99b8d8f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m HEAD@{0}: reset: moving to HEAD~1
+[33m500c840[m HEAD@{1}: Branch: renamed refs/heads/main to refs/heads/main
+[33m500c840[m HEAD@{3}: commit: first commit
+[33m99b8d8f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m HEAD@{4}: Branch: renamed refs/heads/main to refs/heads/main
+[33m99b8d8f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m HEAD@{6}: Branch: renamed refs/heads/main to refs/heads/main
+[33m99b8d8f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m HEAD@{8}: commit: Arreglando errores de whatsapp
+[33mcdca3fc[m HEAD@{9}: commit: Arreglando errores de carga de creacion de productos 2
+[33m9ddf87d[m HEAD@{10}: commit: Arreglando errores de carga de creacion de productos
+[33m5c4e513[m HEAD@{11}: commit: Arreglando errores de editar productos
+[33me138bdd[m HEAD@{12}: commit: Arreglando errores y agregando carrito en admin e inventario 3
+[33m870bf05[m HEAD@{13}: commit: Arreglando errores y agregando carrito en admin e inventario 2
+[33mf3bfc9e[m HEAD@{14}: commit: Arreglando errores y agregando carrito en admin e inventario
+[33m5011b8f[m HEAD@{15}: commit: Arreglando errores y agregando carrito en admin e inventario
+[33m21e3a67[m HEAD@{16}: commit: Arreglando errores y carga de fotos 2
+[33mdd3f1b7[m HEAD@{17}: commit: Arreglando errores y carga de fotos 1
+[33m3d4e4f9[m HEAD@{18}: commit: Arreglando bd de supabase 3
+[33m80fa9a0[m HEAD@{19}: commit: Arreglando bd de supabase 2
+[33m38381dd[m HEAD@{20}: commit: Arreglando bd de supabase 1
+[33m2d5f38a[m HEAD@{21}: commit: Corregir errores de despliegue 23
+[33ma51bd33[m HEAD@{22}: commit: Corregir errores de despliegue 22
+[33mbe9d72f[m HEAD@{23}: commit: Corregir errores de despliegue 21
+[33mc2a633b[m HEAD@{24}: commit: Corregir errores de despliegue 20
+[33m138c686[m HEAD@{25}: commit: Corregir errores de despliegue 19
+[33m1db783c[m HEAD@{26}: commit: Corregir errores de despliegue 18
+[33md5338a7[m HEAD@{27}: commit: Corregir errores de despliegue 17
+[33mdcab2ed[m HEAD@{28}: commit: Corregir errores de despliegue 16
+[33medaf52e[m HEAD@{29}: commit: Corregir errores de despliegue 15
+[33m13aedd7[m HEAD@{30}: commit: Corregir errores de despliegue 14
+[33m49bb82f[m HEAD@{31}: commit: Corregir errores de despliegue 13
+[33m176358f[m HEAD@{32}: commit: Corregir errores de despliegue 12
+[33m040c8b7[m HEAD@{33}: commit: Corregir errores de despliegue 11
+[33m49302e2[m HEAD@{34}: commit: Corregir errores de despliegue 10
+[33mcd7d970[m HEAD@{35}: commit: Corregir errores de despliegue 9
+[33ma963a59[m HEAD@{36}: commit: Corregir errores de despliegue 8
+[33maa7978c[m HEAD@{37}: commit: Corregir errores de despliegue 7
+[33m6c33766[m HEAD@{38}: commit: Corregir errores de despliegue 6
+[33mfa9b903[m HEAD@{39}: commit: Corregir errores de despliegue 5
+[33m576eb3e[m HEAD@{40}: commit: Corregir errores de despliegue 4
+[33md27e21c[m HEAD@{41}: commit: Corregir errores de despliegue 3
+[33m363f696[m HEAD@{42}: commit: Corregir errores de despliegue 2
+[33m61b4637[m HEAD@{43}: commit: Corregir errores de despliegue 1
+[33m8160318[m HEAD@{44}: Branch: renamed refs/heads/master to refs/heads/main
+[33m8160318[m HEAD@{46}: commit: Primer commit
+[33m9768bf9[m HEAD@{47}: commit (initial): Initial commit from Create Next App
