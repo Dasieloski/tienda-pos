@@ -30,10 +30,13 @@ export async function GET(request: Request) {
                     }
                 },
                 include: { category: true },
+                
             })
         } else {
             productos = await prisma.product.findMany({
-                include: { category: true },
+                include: { category: true,
+                    almacen_ventas: true
+                 },
             })
         }
 

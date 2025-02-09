@@ -1,0 +1,11 @@
+-- CreateTable
+CREATE TABLE "cash_register" (
+    "id" SERIAL NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "totalSales" INTEGER NOT NULL DEFAULT 0,
+    "totalAmount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "cash_register_pkey" PRIMARY KEY ("id")
+);
