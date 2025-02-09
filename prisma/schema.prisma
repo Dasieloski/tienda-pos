@@ -141,7 +141,7 @@ model Sale {
   saleProduct   SaleProduct[]
 
   @@index([createdAt])
-  @@map("sale")
+  @@map("sales")
 }
 
 model SaleProduct {
