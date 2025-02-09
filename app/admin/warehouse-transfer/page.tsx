@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner"
 import { ChevronUp, ChevronDown } from "lucide-react"
 import { TableSkeleton } from "@/components/TableSkeleton"
-import { FunLoader } from "@/components/Funloader"
+import { FunLoader } from "@/components/FunLoader"
 
 interface Product {
   id: string
