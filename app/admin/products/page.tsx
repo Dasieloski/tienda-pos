@@ -79,13 +79,6 @@ export default function ProductsPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  const [currency, setCurrency] = useState<string>("USD")
-  const currencies = [
-    { value: "USD", label: "$ USD" },
-    { value: "EUR", label: "€ EUR" },
-    { value: "GBP", label: "£ GBP" },
-  ]
-
   // Nuevos estados para filtrado y búsqueda
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
@@ -315,7 +308,11 @@ export default function ProductsPage() {
                   Añade o modifica los detalles del producto aquí. Asegúrate de completar todos los campos requeridos.
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleSubmit} encType="multipart/form-data" className="space-y-4">
+              <form
+                onSubmit={handleSubmit}
+                encType="multipart/form-data"
+                className="space-y-4 max-h-[70vh] overflow-y-auto pr-4"
+              >
                 <div>
                   <Label htmlFor="name">Nombre</Label>
                   <Input
@@ -400,20 +397,8 @@ export default function ProductsPage() {
                     required={!editingProduct}
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Select value={currency} onValueChange={setCurrency}>
-                    <SelectTrigger className="w-[100px]">
-                      <SelectValue placeholder="Moneda" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {currencies.map((c) => (
-                        <SelectItem key={c.value} value={c.value}>
-                          {c.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button type="submit" disabled={isLoading}>
+                <div>
+                  <Button type="submit" disabled={isLoading} className="w-full">
                     {isLoading ? (
                       <span className="flex items-center gap-2">
                         <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">

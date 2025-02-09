@@ -30,22 +30,23 @@ model Category {
 }
 
 model Product {
-  id                  String          @id @default(cuid())
+  id                  String         @id @default(cuid())
   name                String
-  price               Decimal         @db.Decimal(10, 2)
+  price               Decimal        @db.Decimal(10, 2)
   image               String
   categoryId          String
   description         String
   emoji               String
   detailedDescription String?
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-  stock               Int             @default(0)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  stock               Int            @default(0)
   SaleProduct         SaleProduct[]
   almacen_ventas      AlmacenVentas?
   Offer               Offer[]
-  category            Category        @relation(fields: [categoryId], references: [id])
+  category            Category       @relation(fields: [categoryId], references: [id])
 
+  @@index([stock])
   @@map("products")
 }
 
@@ -138,6 +139,9 @@ model Sale {
   updatedAt     DateTime
   returnRequest ReturnRequest[]
   saleProduct   SaleProduct[]
+
+  @@index([createdAt])
+  @@map("sale")
 }
 
 model SaleProduct {
@@ -162,15 +166,16 @@ model CashRegister {
 }
 
 model Historial {
-  id         Int      @id @default(autoincrement())
-  action     String
-  details    String
-  user       String
-  location   String
-  timestamp  DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  action    String
+  details   String
+  user      String
+  location  String
+  timestamp DateTime @default(now())
 
   @@map("historial")
 }
+
 enum Role {
   ADMIN
   EMPLOYEE
