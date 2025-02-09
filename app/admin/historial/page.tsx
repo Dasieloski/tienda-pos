@@ -1,7 +1,7 @@
 /* eslint-disable */
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -34,51 +34,27 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 
-// Mock data for historial
-const mockHistorial = [
-  {
-    id: 1,
-    timestamp: new Date("2024-02-05T10:30:00"),
-    action: "stock_update",
-    details: "Actualización de stock: Smartphone XYZ de 5 a 10 unidades",
-    user: "admin@example.com",
-    location: "Gran Almacén",
-  },
-  {
-    id: 2,
-    timestamp: new Date("2024-02-05T11:15:00"),
-    action: "stock_transfer",
-    details: "Transferencia: 3 unidades de Laptop Pro al Almacén de Ventas",
-    user: "admin@example.com",
-    location: "Gran Almacén",
-  },
-  {
-    id: 3,
-    timestamp: new Date("2024-02-05T12:00:00"),
-    action: "stock_low",
-    details: "Alerta: Stock bajo en Auriculares Gaming (2 unidades)",
-    user: "sistema",
-    location: "Almacén de Ventas",
-  },
-  {
-    id: 4,
-    timestamp: new Date("2024-02-05T14:30:00"),
-    action: "stock_update",
-    details: "Actualización de stock: Smart TV 55' de 15 a 12 unidades",
-    user: "vendedor@example.com",
-    location: "Almacén de Ventas",
-  },
-]
+interface HistorialEntry {
+  id: number
+  action: string
+  details: string
+  user: string
+  location: string
+  timestamp: string
+}
 
 const actionTypes = {
-  stock_update: { label: "Actualización de Stock", emoji: "📦" },
-  stock_transfer: { label: "Transferencia", emoji: "🔄" },
+  actualizacion_stock: { label: "Actualización de Stock", emoji: "📦" },
+  transferencia_almacen: { label: "Transferencia de Almacén", emoji: "🔄" },
+  venta: { label: "Venta", emoji: "💰" },
   stock_low: { label: "Alerta de Stock", emoji: "⚠️" },
 }
 
 const locations = {
   "Gran Almacén": "🏭",
   "Almacén de Ventas": "🏪",
+  "Administrador": "🛠️",
+  "Almacén Principal": "🏭",
 }
 
 interface FilterState {
@@ -97,6 +73,24 @@ export default function Historial() {
     actionType: "todos",
     location: "todos",
   })
+  const [historial, setHistorial] = useState<HistorialEntry[]>([])
+  const [totalPagesState, setTotalPages] = useState(1)
+
+  useEffect(() => {
+    const fetchHistorial = async () => {
+      try {
+        const res = await fetch('/api/historial')
+        if (!res.ok) throw new Error('Error al obtener el historial')
+        const data: HistorialEntry[] = await res.json()
+        setHistorial(data)
+        setTotalPages(Math.ceil(data.length / itemsPerPage))
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    fetchHistorial()
+  }, [itemsPerPage])
 
   const clearFilters = () => {
     setFilters({
@@ -114,15 +108,15 @@ export default function Historial() {
     return count
   }
 
-  const filteredHistorial = mockHistorial
+  const filteredHistorial = historial
     .filter((item) => {
       const matchesSearch =
         item.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.user.toLowerCase().includes(searchTerm.toLowerCase())
 
       const matchesDateRange =
-        (!filters.dateRange.from || item.timestamp >= filters.dateRange.from) &&
-        (!filters.dateRange.to || item.timestamp <= filters.dateRange.to)
+        (!filters.dateRange.from || new Date(item.timestamp) >= filters.dateRange.from) &&
+        (!filters.dateRange.to || new Date(item.timestamp) <= filters.dateRange.to)
 
       const matchesActionType = filters.actionType === "todos" || item.action === filters.actionType
 
@@ -130,17 +124,18 @@ export default function Historial() {
 
       return matchesSearch && matchesDateRange && matchesActionType && matchesLocation
     })
-    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
   // Pagination calculations
   const totalFilteredItems = filteredHistorial.length
-  const totalPages = Math.ceil(totalFilteredItems / itemsPerPage)
+  const calculatedTotalPages = Math.ceil(totalFilteredItems / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
   const currentItems = filteredHistorial.slice(startIndex, endIndex)
 
   // Handle page change
   const handlePageChange = (page: number) => {
+    if (page < 1 || page > calculatedTotalPages) return
     setCurrentPage(page)
   }
 
@@ -149,7 +144,7 @@ export default function Historial() {
     const pages = []
     const maxVisiblePages = 5
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
-    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+    const endPage = Math.min(calculatedTotalPages, startPage + maxVisiblePages - 1)
 
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1)
@@ -394,10 +389,11 @@ export default function Historial() {
                       exit={{ opacity: 0 }}
                       className="group hover:bg-muted/50 transition-colors"
                     >
-                      <TableCell className="font-medium">{formatDate(item.timestamp)}</TableCell>
+                      <TableCell className="font-medium">{formatDate(new Date(item.timestamp))}</TableCell>
                       <TableCell>
                         <Badge variant="outline">
-                          {actionTypes[item.action].emoji} {actionTypes[item.action].label}
+                          {actionTypes[item.action] ? actionTypes[item.action].emoji : "❓"}{" "}
+                          {actionTypes[item.action] ? actionTypes[item.action].label : "Acción Desconocida"}
                         </Badge>
                       </TableCell>
                       <TableCell>{item.details}</TableCell>
@@ -444,13 +440,13 @@ export default function Historial() {
                     </PaginationItem>
                   ))}
 
-                  {currentPage < totalPages - 2 && (
+                  {currentPage < calculatedTotalPages - 2 && (
                     <>
                       <PaginationItem>
                         <PaginationEllipsis />
                       </PaginationItem>
                       <PaginationItem>
-                        <PaginationLink onClick={() => handlePageChange(totalPages)}>{totalPages}</PaginationLink>
+                        <PaginationLink onClick={() => handlePageChange(calculatedTotalPages)}>{calculatedTotalPages}</PaginationLink>
                       </PaginationItem>
                     </>
                   )}
@@ -458,7 +454,7 @@ export default function Historial() {
                   <PaginationItem>
                     <PaginationNext
                       onClick={() => handlePageChange(currentPage + 1)}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      className={currentPage === calculatedTotalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
                     />
                   </PaginationItem>
                 </PaginationContent>

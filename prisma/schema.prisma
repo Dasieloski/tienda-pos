@@ -161,8 +161,19 @@ model CashRegister {
   @@map("cash_register")
 }
 
+model Historial {
+  id         Int      @id @default(autoincrement())
+  action     String
+  details    String
+  user       String
+  location   String
+  timestamp  DateTime @default(now())
+
+  @@map("historial")
+}
 enum Role {
   ADMIN
+  EMPLOYEE
 }
 
 enum OrderStatus {

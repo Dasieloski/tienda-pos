@@ -1,11 +1,15 @@
 /* eslint-disable */
 import { db } from "@/lib/db"
 import { NextResponse } from "next/server"
+import { prisma } from '@/lib/prisma'
+import { crearEntradaHistorial } from '@/lib/historial'
 
 export async function POST(request: Request) {
     try {
         const body = await request.json()
         const { products, total, paymentMethod } = body
+        const user = 'empleado@example.com' // Reemplaza esto con el usuario actual
+        const location = 'Empleados-Ventas'
 
         if (!products || !Array.isArray(products) || products.length === 0) {
             return NextResponse.json(
@@ -14,15 +18,28 @@ export async function POST(request: Request) {
             )
         }
 
+        // Obtener detalles de los productos (nombre y categoría)
+        const productDetails = await Promise.all(products.map(async (product: any) => {
+            const prod = await prisma.product.findUnique({
+                where: { id: product.productId },
+                include: { category: true }
+            })
+            if (prod) {
+                return `${prod.name} (${prod.category.name})`
+            } else {
+                return `Producto ID: ${product.productId}`
+            }
+        }))
+
         // Crear la venta
-        const sale = await db.sale.create({
+        const sale = await prisma.sale.create({
             data: {
                 total: parseFloat(total.toString()),
                 paymentMethod: paymentMethod || 'efectivo',
                 status: "completed",
                 updatedAt: new Date(),
                 saleProduct: {
-                    create: products.map((product) => ({
+                    create: products.map((product: any) => ({
                         productId: product.productId,
                         quantity: product.quantity,
                         price: parseFloat(product.price.toString())
@@ -38,9 +55,19 @@ export async function POST(request: Request) {
             }
         })
 
+        // Registrar en el historial con detalles de productos
+        const detallesVenta = `Venta realizada con ID: ${sale.id}, Total: ${total}, Método de Pago: ${paymentMethod}. Productos: ${productDetails.join(', ')}.`
+
+        await crearEntradaHistorial(
+            'venta',
+            detallesVenta,
+            user,
+            location
+        )
+
         // Actualizar el stock en almacen_ventas
         await Promise.all(products.map(product => 
-            db.almacenVentas.update({
+            prisma.almacenVentas.update({
                 where: {
                     productId: product.productId
                 },
@@ -53,25 +80,15 @@ export async function POST(request: Request) {
         ))
 
         return NextResponse.json(sale, { status: 201 })
-    } catch (error) {
-        console.error('Error al crear la venta:', error)
-        
-        // Mejorar el mensaje de error basado en el tipo de error
-        let errorMessage = 'Error al procesar la venta'
-        if (error instanceof Error) {
-            errorMessage = error.message
-        }
-
-        return NextResponse.json(
-            { error: errorMessage },
-            { status: 500 }
-        )
+    } catch (error: any) {
+        console.error('Error al procesar la venta:', error)
+        return NextResponse.json({ error: error.message || 'Error al procesar la venta' }, { status: 500 })
     }
 }
 
 export async function GET() {
     try {
-        const sales = await db.sale.findMany({
+        const sales = await prisma.sale.findMany({
             orderBy: {
                 createdAt: 'desc'
             },

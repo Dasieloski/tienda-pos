@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useCart } from '@/contexts/CartContext'
 import { Button } from '@/components/ui/button'
+import {OfferCardSkeleton} from "@/components/skeletons"
 
 interface Offer {
   id: string
@@ -98,7 +99,7 @@ export function OffersSlider() {
   }, [])
 
   if (isLoading) {
-    return <p>Cargando ofertas...</p>
+    return <OfferCardSkeleton/>
   }
 
   if (error) {

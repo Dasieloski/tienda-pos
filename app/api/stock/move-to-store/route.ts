@@ -1,6 +1,8 @@
 /* eslint-disable */
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { crearEntradaHistorial } from '@/lib/historial'
+
 
 export async function POST(req: Request) {
     try {
@@ -37,6 +39,13 @@ export async function POST(req: Request) {
 
             return { updatedProduct, updatedAlmacenVentas }
         })
+
+         await crearEntradaHistorial(
+      'actualizacion_stock',
+      `Stock del producto ID: ${productId} actualizado a ${newStock}`,
+      user,
+      location
+    )
 
         return NextResponse.json(result)
     } catch (error: any) {

@@ -4,7 +4,11 @@ import { login } from '@/lib/server/auth'
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData()
+    const { email, password } = await request.json()
+    const formData = new FormData()
+    formData.append('email', email)
+    formData.append('password', password)
+    
     const result = await login(formData)
 
     if (result.success) {
@@ -29,4 +33,4 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ success: false, message: 'Error desconocido' }, { status: 500 })
   }
-}
+} 

@@ -27,6 +27,8 @@ import { Search, Plus, Undo2, Calculator, Sun, Moon, Menu } from "lucide-react"
 import { toast } from "sonner"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import {FunLoader} from "@/components/FunLoader"
+import { useRouter } from 'next/navigation'
+
 interface Product {
     id: string
     name: string
@@ -278,6 +280,43 @@ export default function EmpleadoPage() {
         totalAmount: 0
     });
     const [isLoadingCashRegister, setIsLoadingCashRegister] = useState(true);
+    const router = useRouter()
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+    useEffect(() => {
+        let isMounted = true
+
+        const checkSession = async () => {
+            try {
+                const response = await fetch('/api/empleado/auth/session')
+                const data = await response.json()
+
+                if (!isMounted) return
+
+                if (data.authenticated) {
+                    setIsAuthenticated(true)
+                } else {
+                    router.replace('/empleado/login')
+                }
+            } catch (error) {
+                console.error('Error al verificar la sesión:', error)
+                if (isMounted) {
+                    toast.error('Error al verificar la sesión')
+                    router.replace('/empleado/login')
+                }
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false)
+                }
+            }
+        }
+
+        checkSession()
+
+        return () => {
+            isMounted = false
+        }
+    }, [router])
 
     useEffect(() => {
         setMounted(true)
@@ -579,6 +618,14 @@ Causa: [Por favor, especifique la causa de la devolución]`
 
         const encodedMessage = encodeURIComponent(message)
         window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, "_blank")
+    }
+
+    if (isLoading) {
+        return <FunLoader />
+    }
+
+    if (!isAuthenticated) {
+        return null
     }
 
     return (

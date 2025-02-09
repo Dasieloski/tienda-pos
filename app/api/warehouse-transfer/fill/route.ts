@@ -1,6 +1,8 @@
 /* eslint-disable */
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { crearEntradaHistorial } from '@/lib/historial'
+
 
 type UpdatedProduct = {
     id: string;
@@ -14,6 +16,8 @@ type UpdatedProduct = {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
+        const user = 'admin@example.com'; // Reemplaza para obtener el usuario actual
+        const location = 'Almacén Principal'; // Define la ubicación según corresponda
 
         if (!body.products || !Array.isArray(body.products)) {
             return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
@@ -89,6 +93,16 @@ export async function POST(req: Request) {
             });
 
             updatedProducts.push(transferResult);
+        }
+
+        // Registrar en el historial para cada transferencia
+        for (const product of updatedProducts) {
+            await crearEntradaHistorial(
+                'transferencia_almacen',
+                `Transferencia de ${product.mainWarehouseQuantity} unidades del producto ${product.name} (ID: ${product.id})`,
+                user,
+                location
+            );
         }
 
         return NextResponse.json(updatedProducts, { status: 200 });

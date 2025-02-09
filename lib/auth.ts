@@ -14,7 +14,7 @@ export async function encrypt(payload: any) {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('24h')
+    .setExpirationTime('7d')
     .sign(key)
 }
 
@@ -70,14 +70,7 @@ export async function login(formData: FormData) {
     },
   })
 
-  cookies().set('session', session, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-  })
-
-  return { success: true }
+  return { success: true, sessionToken: session }
 }
 
 export async function logout() {
@@ -92,10 +85,16 @@ export async function logout() {
   cookies().delete('session')
 }
 
-export async function getSession() {
-  const session = cookies().get('session')?.value
+export async function getSession(sessionToken?: string) {
+  const session = sessionToken || cookies().get('session')?.value
   if (!session) return null
-  return await decrypt(session)
+  try {
+    const sessionData = await decrypt(session)
+    return sessionData
+  } catch (error) {
+    console.error('Error al descifrar la sesión:', error)
+    return null
+  }
 }
 
 export async function updateSession(request: NextRequest) {
@@ -132,14 +131,6 @@ export async function updateSession(request: NextRequest) {
     },
   })
 
-  const response = NextResponse.next()
-  response.cookies.set('session', newSession, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-  })
-
-  return response
+  return { newSession }
 }
 

@@ -19,15 +19,27 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
 
-    // Simulated login - replace with actual authentication
-    if (email === "empleado@example.com" && password === "password") {
-      toast.success("¡Bienvenido! 👋")
-      router.push("/empleado")
-    } else {
-      toast.error("Credenciales incorrectas ❌")
-    }
+    try {
+      const response = await fetch('/api/empleado/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
 
-    setLoading(false)
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        toast.success("¡Bienvenido! 👋")
+        router.push("/empleado")
+      } else {
+        toast.error(data.message || "Credenciales incorrectas ❌")
+      }
+    } catch (error) {
+      console.error("Error al iniciar sesión:", error)
+      toast.error("Ocurrió un error al iniciar sesión ❌")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

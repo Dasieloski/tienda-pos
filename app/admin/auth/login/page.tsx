@@ -3,10 +3,13 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { toast } from "sonner"
+import { login } from '@/lib/auth'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -19,8 +22,6 @@ export default function LoginPage() {
     setIsLoading(true)
 
     const formData = new FormData(e.currentTarget)
-/*     const email = formData.get('email') as string
-    const password = formData.get('password') as string */
 
     try {
       const response = await fetch('/api/admin/auth/login', {
@@ -31,6 +32,7 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (data.success) {
+        toast.success("¡Bienvenido! 👋")
         router.push('/admin')
       } else {
         setError(data.message || 'Credenciales incorrectas')
@@ -49,17 +51,13 @@ export default function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-          <div className="flex flex-col space-y-6">
-            <div className="flex flex-col space-y-2 text-center">
-              <h1 className="text-2xl font-bold tracking-tight">
-                ⚡ Panel Administrativo
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Ingresa tus credenciales para acceder
-              </p>
-            </div>
+        <Card className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+          <CardHeader className="flex flex-col space-y-2 text-center">
+            <CardTitle className="text-2xl font-bold">⚡ Panel Administrativo</CardTitle>
+            <CardDescription>Ingresa tus credenciales para acceder</CardDescription>
+          </CardHeader>
 
+          <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Correo electrónico</Label>
@@ -99,8 +97,8 @@ export default function LoginPage() {
                 {isLoading ? '🔄 Cargando...' : '🔐 Iniciar sesión'}
               </Button>
             </form>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </motion.div>
     </div>
   )

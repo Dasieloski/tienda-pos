@@ -1,12 +1,8 @@
-/** @type {import('tailwindcss').Config} */
-module.exports = {
+import type { Config } from "tailwindcss"
+
+const config = {
   darkMode: ["class"],
-  content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
-	],
+  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   theme: {
     container: {
       center: true,
@@ -16,6 +12,11 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-outfit)", "system-ui", "sans-serif"],
+        heading: ["var(--font-outfit)", "system-ui", "sans-serif"],
+        body: ["var(--font-inter)", "system-ui", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -58,20 +59,39 @@ module.exports = {
       },
       keyframes: {
         "accordion-down": {
-          from: { height: 0 },
+          from: { height: "0" },
           to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: 0 },
+          to: { height: "0" },
+        },
+        "float-diagonal": {
+          "0%": {
+            transform: "translate(100vw, 100vh) rotate(0deg)",
+            opacity: "0",
+          },
+          "10%": {
+            opacity: "0.5",
+          },
+          "90%": {
+            opacity: "0.5",
+          },
+          "100%": {
+            transform: "translate(-100px, -100px) rotate(360deg)",
+            opacity: "0",
+          },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "float-diagonal": "float-diagonal 15s linear infinite",
       },
     },
   },
   plugins: [require("tailwindcss-animate")],
-}
+} satisfies Config
+
+export default config
 
