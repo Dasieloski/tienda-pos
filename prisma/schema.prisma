@@ -42,11 +42,22 @@ model Product {
   updatedAt           DateTime        @updatedAt
   stock               Int             @default(0)
   SaleProduct         SaleProduct[]
-  almacen_ventas      almacen_ventas?
+  almacen_ventas      AlmacenVentas?
   Offer               Offer[]
   category            Category        @relation(fields: [categoryId], references: [id])
 
   @@map("products")
+}
+
+model AlmacenVentas {
+  id        String   @id
+  productId String   @unique
+  stock     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@map("almacen_ventas")
 }
 
 model Currency {
@@ -115,7 +126,7 @@ model ReturnRequest {
   status    ReturnStatus @default(PENDING)
   createdAt DateTime     @default(now())
   updatedAt DateTime
-  Sale      Sale         @relation(fields: [saleId], references: [id])
+  sale      Sale         @relation(fields: [saleId], references: [id])
 }
 
 model Sale {
@@ -125,8 +136,8 @@ model Sale {
   status        String          @default("completed")
   createdAt     DateTime        @default(now())
   updatedAt     DateTime
-  ReturnRequest ReturnRequest[]
-  SaleProduct   SaleProduct[]
+  returnRequest ReturnRequest[]
+  saleProduct   SaleProduct[]
 }
 
 model SaleProduct {
@@ -135,17 +146,8 @@ model SaleProduct {
   productId String
   quantity  Int
   price     Float
-  products  Product @relation(fields: [productId], references: [id])
-  Sale      Sale    @relation(fields: [saleId], references: [id])
-}
-
-model almacen_ventas {
-  id        String   @id
-  productId String   @unique
-  stock     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime
-  products  Product  @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+  sale      Sale    @relation(fields: [saleId], references: [id])
 }
 
 enum Role {

@@ -43,6 +43,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { FunLoader } from "@/components/FunLoader"
 
 interface Category {
   name: string
@@ -63,6 +64,14 @@ interface FilterState {
   maxPrice: number
   stockStatus: string
   priceRange: [number, number]
+}
+
+interface StockDialogProps {
+  productId: number
+  currentStock: number
+  productName: string
+  onUpdate: (newStock: number) => void
+  isUpdatingStock: boolean
 }
 
 const LowStockIndicator = () => {
@@ -86,7 +95,7 @@ const LowStockIndicator = () => {
   )
 }
 
-function StockDialog({ productId, currentStock, productName, onUpdate }: StockDialogProps) {
+function StockDialog({ productId, currentStock, productName, onUpdate, isUpdatingStock }: StockDialogProps) {
   const [newStock, setNewStock] = useState(currentStock)
 
   const handleUpdate = () => {
@@ -113,8 +122,8 @@ function StockDialog({ productId, currentStock, productName, onUpdate }: StockDi
           />
         </div>
       </div>
-      <Button onClick={handleUpdate} className="w-full">
-        ✨ Actualizar Stock
+      <Button onClick={handleUpdate} className="w-full" disabled={isUpdatingStock}>
+        {isUpdatingStock ? "🔄" : "✨"} Actualizar Stock
       </Button>
     </DialogContent>
   )
@@ -125,9 +134,10 @@ interface MoveToStoreDialogProps {
   productName: string
   currentStock: number
   onMove: (quantity: number) => void
+  isMovingToStore: boolean
 }
 
-function MoveToStoreDialog({ productId, productName, currentStock, onMove }: MoveToStoreDialogProps) {
+function MoveToStoreDialog({ productId, productName, currentStock, onMove, isMovingToStore }: MoveToStoreDialogProps) {
   const [quantity, setQuantity] = useState(1)
   const [isOpen, setIsOpen] = useState(false)
 
@@ -185,8 +195,8 @@ function MoveToStoreDialog({ productId, productName, currentStock, onMove }: Mov
           <Button variant="outline" onClick={() => setIsOpen(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleMove} className="w-32">
-            ✨ Mover
+          <Button onClick={handleMove} className="w-32" disabled={isMovingToStore}>
+            {isMovingToStore ? "🚚" : "✨"} Mover
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -201,6 +211,9 @@ export default function GranAlmacen() {
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(25)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isUpdatingStock, setIsUpdatingStock] = useState(false)
+  const [isMovingToStore, setIsMovingToStore] = useState(false) // Added state variable
 
   // Estado para los filtros
   const [filters, setFilters] = useState<FilterState>({
@@ -243,17 +256,20 @@ export default function GranAlmacen() {
   // Obtener productos desde la API
   useEffect(() => {
     const fetchProducts = async () => {
+      setIsLoading(true)
       try {
-        const res = await fetch('/api/products', { method: 'GET' }) // Cambiado de '/api/stock' a '/api/products'
+        const res = await fetch("/api/products", { method: "GET" })
         if (!res.ok) {
-          throw new Error('Error al obtener los productos')
+          throw new Error("Error al obtener los productos")
         }
         const data = await res.json()
-        console.log('Productos recibidos:', data) // Para depuración
+        console.log("Productos recibidos:", data) // Para depuración
         setProducts(data)
       } catch (error: any) {
-        console.error('Error al cargar los productos:', error)
-        toast.error('Error al cargar los productos: ' + error.message)
+        console.error("Error al cargar los productos:", error)
+        toast.error("Error al cargar los productos: " + error.message)
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -286,44 +302,49 @@ export default function GranAlmacen() {
   const handleStockUpdate = async (productId: number, newStock: number) => {
     // Validar que newStock es un número válido
     if (isNaN(newStock) || newStock < 0) {
-      toast.error('Por favor, ingresa un número válido para el stock.')
+      toast.error("Por favor, ingresa un número válido para el stock.")
       return
     }
 
+    setIsUpdatingStock(true)
     try {
-      const res = await fetch('/api/stock', {
-        method: 'PATCH',
+      const res = await fetch("/api/stock", {
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ id: productId, stock: newStock }),
       })
 
       if (!res.ok) {
         const errorData = await res.json()
-        throw new Error(errorData.error || 'Error al actualizar el stock')
+        throw new Error(errorData.error || "Error al actualizar el stock")
       }
 
       // Encontrar el producto actual
-      const currentProduct = products.find(p => p.id === productId)
+      const currentProduct = products.find((p) => p.id === productId)
       if (!currentProduct) {
-        throw new Error('Producto no encontrado')
+        throw new Error("Producto no encontrado")
       }
 
       // Actualizar solo el stock manteniendo el resto de la información del producto
-      setProducts(products.map((product) =>
-        product.id === productId
-          ? {
-            ...product, // Mantener toda la información existente del producto
-            stock: newStock // Actualizar solo el stock
-          }
-          : product
-      ))
+      setProducts(
+        products.map((product) =>
+          product.id === productId
+            ? {
+                ...product, // Mantener toda la información existente del producto
+                stock: newStock, // Actualizar solo el stock
+              }
+            : product,
+        ),
+      )
 
       toast.success(`Stock de ${currentProduct.name} actualizado a ${newStock}`)
     } catch (error: any) {
-      console.error('Error al actualizar el stock:', error)
-      toast.error(error.message || 'No se pudo actualizar el stock')
+      console.error("Error al actualizar el stock:", error)
+      toast.error(error.message || "No se pudo actualizar el stock")
+    } finally {
+      setIsUpdatingStock(false)
     }
   }
 
@@ -335,44 +356,49 @@ export default function GranAlmacen() {
   }
 
   const handleMoveToStore = async (productId: number, quantity: number) => {
-    if (quantity > products.find(p => p.id === productId)?.stock!) {
+    if (quantity > products.find((p) => p.id === productId)?.stock!) {
       toast.error("No hay suficiente stock disponible")
       return
     }
 
+    setIsMovingToStore(true)
     try {
       // Realizar la llamada a la API para mover el stock
-      const res = await fetch('/api/stock/move-to-store', {
-        method: 'POST',
+      const res = await fetch("/api/stock/move-to-store", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           productId,
-          quantity
-        })
+          quantity,
+        }),
       })
 
       if (!res.ok) {
         const errorData = await res.json()
-        throw new Error(errorData.error || 'Error al mover el stock')
+        throw new Error(errorData.error || "Error al mover el stock")
       }
 
       // Actualizar el estado local
-      setProducts(products.map((product) => {
-        if (product.id === productId) {
-          return {
-            ...product,
-            stock: product.stock - quantity,
+      setProducts(
+        products.map((product) => {
+          if (product.id === productId) {
+            return {
+              ...product,
+              stock: product.stock - quantity,
+            }
           }
-        }
-        return product
-      }))
+          return product
+        }),
+      )
 
       toast.success(`${quantity} unidades movidas al almacén de ventas`)
     } catch (error: any) {
-      console.error('Error al mover el stock:', error)
-      toast.error(error.message || 'No se pudo mover el stock')
+      console.error("Error al mover el stock:", error)
+      toast.error(error.message || "No se pudo mover el stock")
+    } finally {
+      setIsMovingToStore(false)
     }
   }
 
@@ -394,7 +420,7 @@ export default function GranAlmacen() {
     const pages = []
     const maxVisiblePages = 5
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
 
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1)
@@ -564,6 +590,8 @@ export default function GranAlmacen() {
               </div>
             )}
 
+            {isLoading && <FunLoader />}
+            {!isLoading && currentItems.length === 0 && <p>No se encontraron productos.</p>}
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -601,81 +629,96 @@ export default function GranAlmacen() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currentItems.map((product) => (
-                    <motion.tr
-                      key={product.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="group hover:bg-muted/50 transition-colors"
-                    >
-                      <TableCell>
-                        <motion.div
-                          whileHover={{ scale: 1.1 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                        >
-                          <Image
-                            src={product.image || "/placeholder.svg"}
-                            alt={product.name}
-                            width={50}
-                            height={50}
-                            className="rounded-md"
-                          />
-                        </motion.div>
+                  {isUpdatingStock || isMovingToStore ? (
+                    <TableRow>
+                      <TableCell colSpan={6}>
+                        <FunLoader />
                       </TableCell>
-                      <TableCell>{product.name}</TableCell>
-                      <TableCell>{product.category.name}</TableCell>
-                      <TableCell>
-                        ${typeof product.price === 'string'
-                          ? parseFloat(product.price).toFixed(2)
-                          : Number(product.price).toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        <span className={product.stock < 10 ? "text-red-500 font-bold" : ""}>{product.stock}</span>
-                        {product.stock < 10 && <LowStockIndicator />}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 group-hover:border-primary">
-                                      ✏️
-                                      <span className="sr-only">Editar Stock</span>
-                                    </Button>
-                                  </DialogTrigger>
-                                  <StockDialog
+                    </TableRow>
+                  ) : (
+                    currentItems.map((product) => (
+                      <motion.tr
+                        key={product.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="group hover:bg-muted/50 transition-colors"
+                      >
+                        <TableCell>
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                          >
+                            <Image
+                              src={product.image || "/placeholder.svg"}
+                              alt={product.name}
+                              width={50}
+                              height={50}
+                              className="rounded-md"
+                            />
+                          </motion.div>
+                        </TableCell>
+                        <TableCell>{product.name}</TableCell>
+                        <TableCell>{product.category.name}</TableCell>
+                        <TableCell>
+                          $
+                          {typeof product.price === "string"
+                            ? Number.parseFloat(product.price).toFixed(2)
+                            : Number(product.price).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <span className={product.stock < 10 ? "text-red-500 font-bold" : ""}>{product.stock}</span>
+                          {product.stock < 10 && <LowStockIndicator />}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 group-hover:border-primary"
+                                      >
+                                        ✏️
+                                        <span className="sr-only">Editar Stock</span>
+                                      </Button>
+                                    </DialogTrigger>
+                                    <StockDialog
+                                      productId={product.id}
+                                      currentStock={product.stock}
+                                      productName={product.name}
+                                      onUpdate={(newStock) => handleStockUpdate(product.id, newStock)}
+                                      isUpdatingStock={isUpdatingStock}
+                                    />
+                                  </Dialog>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Editar Stock</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <MoveToStoreDialog
                                     productId={product.id}
-                                    currentStock={product.stock}
                                     productName={product.name}
-                                    onUpdate={(newStock) => handleStockUpdate(product.id, newStock)}
+                                    currentStock={product.stock}
+                                    onMove={(quantity) => handleMoveToStore(product.id, quantity)}
+                                    isMovingToStore={isMovingToStore}
                                   />
-                                </Dialog>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Editar Stock</p>
-                              </TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <MoveToStoreDialog
-                                  productId={product.id}
-                                  productName={product.name}
-                                  currentStock={product.stock}
-                                  onMove={(quantity) => handleMoveToStore(product.id, quantity)}
-                                />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Mover a Ventas</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                      </TableCell>
-                    </motion.tr>
-                  ))}
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Mover a Ventas</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                        </TableCell>
+                      </motion.tr>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>

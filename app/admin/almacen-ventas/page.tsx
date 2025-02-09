@@ -32,6 +32,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { toast } from "sonner"
+import { FunLoader } from "@/components/FunLoader"
 
 interface Category {
   name: string
@@ -85,6 +86,7 @@ export default function AlmacenVentas() {
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(25)
+  const [isLoading, setIsLoading] = useState(true)
 
   // Estado para los filtros
   const [filters, setFilters] = useState<FilterState>({
@@ -188,16 +190,19 @@ export default function AlmacenVentas() {
   // Cargar productos
   useEffect(() => {
     const fetchProducts = async () => {
+      setIsLoading(true)
       try {
-        const res = await fetch('/api/almacen-ventas')
+        const res = await fetch("/api/almacen-ventas")
         if (!res.ok) {
-          throw new Error('Error al cargar los productos')
+          throw new Error("Error al cargar los productos")
         }
         const data = await res.json()
         setProducts(data)
       } catch (error) {
-        console.error('Error:', error)
-        toast.error('Error al cargar los productos')
+        console.error("Error:", error)
+        toast.error("Error al cargar los productos")
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -361,82 +366,87 @@ export default function AlmacenVentas() {
               </div>
             )}
 
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>🖼️ Imagen</TableHead>
-                    <TableHead onClick={() => handleSort("name")} className="cursor-pointer hover:bg-muted">
-                      📝 Nombre{" "}
-                      {sortConfig.key === "name" &&
-                        (sortConfig.direction === "asc" ? (
-                          <SortAsc className="inline h-4 w-4" />
-                        ) : (
-                          <SortDesc className="inline h-4 w-4" />
-                        ))}
-                    </TableHead>
-                    <TableHead>📁 Categoría</TableHead>
-                    <TableHead onClick={() => handleSort("price")} className="cursor-pointer hover:bg-muted">
-                      💰 Precio{" "}
-                      {sortConfig.key === "price" &&
-                        (sortConfig.direction === "asc" ? (
-                          <SortAsc className="inline h-4 w-4" />
-                        ) : (
-                          <SortDesc className="inline h-4 w-4" />
-                        ))}
-                    </TableHead>
-                    <TableHead onClick={() => handleSort("stock")} className="cursor-pointer hover:bg-muted">
-                      📦 Stock{" "}
-                      {sortConfig.key === "stock" &&
-                        (sortConfig.direction === "asc" ? (
-                          <SortAsc className="inline h-4 w-4" />
-                        ) : (
-                          <SortDesc className="inline h-4 w-4" />
-                        ))}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentItems.map((product) => (
-                    <motion.tr
-                      key={product.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="group hover:bg-muted/50 transition-colors"
-                    >
-                      <TableCell>
-                        <motion.div
-                          whileHover={{ scale: 1.1 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                        >
-                          <Image
-                            src={product.image || "/placeholder.svg"}
-                            alt={product.name}
-                            width={50}
-                            height={50}
-                            className="rounded-md"
-                          />
-                        </motion.div>
-                      </TableCell>
-                      <TableCell>{product.name}</TableCell>
-                      <TableCell>{product.category.name}</TableCell>
-                     <TableCell>
-                        ${typeof product.price === 'string'
-                          ? parseFloat(product.price).toFixed(2)
-                          : Number(product.price).toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        <span className={(product.almacen_ventas?.stock || 0) < 5 ? "text-red-500 font-bold" : ""}>
-                          {product.almacen_ventas?.stock || 0}
-                        </span>
-                        {(product.almacen_ventas?.stock || 0) < 5 && <LowStockIndicator />}
-                      </TableCell>
-                    </motion.tr>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            {isLoading ? (
+              <FunLoader />
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>🖼️ Imagen</TableHead>
+                      <TableHead onClick={() => handleSort("name")} className="cursor-pointer hover:bg-muted">
+                        📝 Nombre{" "}
+                        {sortConfig.key === "name" &&
+                          (sortConfig.direction === "asc" ? (
+                            <SortAsc className="inline h-4 w-4" />
+                          ) : (
+                            <SortDesc className="inline h-4 w-4" />
+                          ))}
+                      </TableHead>
+                      <TableHead>📁 Categoría</TableHead>
+                      <TableHead onClick={() => handleSort("price")} className="cursor-pointer hover:bg-muted">
+                        💰 Precio{" "}
+                        {sortConfig.key === "price" &&
+                          (sortConfig.direction === "asc" ? (
+                            <SortAsc className="inline h-4 w-4" />
+                          ) : (
+                            <SortDesc className="inline h-4 w-4" />
+                          ))}
+                      </TableHead>
+                      <TableHead onClick={() => handleSort("stock")} className="cursor-pointer hover:bg-muted">
+                        📦 Stock{" "}
+                        {sortConfig.key === "stock" &&
+                          (sortConfig.direction === "asc" ? (
+                            <SortAsc className="inline h-4 w-4" />
+                          ) : (
+                            <SortDesc className="inline h-4 w-4" />
+                          ))}
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {currentItems.map((product) => (
+                      <motion.tr
+                        key={product.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="group hover:bg-muted/50 transition-colors"
+                      >
+                        <TableCell>
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                          >
+                            <Image
+                              src={product.image || "/placeholder.svg"}
+                              alt={product.name}
+                              width={50}
+                              height={50}
+                              className="rounded-md"
+                            />
+                          </motion.div>
+                        </TableCell>
+                        <TableCell>{product.name}</TableCell>
+                        <TableCell>{product.category.name}</TableCell>
+                        <TableCell>
+                          $
+                          {typeof product.price === "string"
+                            ? Number.parseFloat(product.price).toFixed(2)
+                            : Number(product.price).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <span className={(product.almacen_ventas?.stock || 0) < 5 ? "text-red-500 font-bold" : ""}>
+                            {product.almacen_ventas?.stock || 0}
+                          </span>
+                          {(product.almacen_ventas?.stock || 0) < 5 && <LowStockIndicator />}
+                        </TableCell>
+                      </motion.tr>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
 
             {/* Pagination */}
             <div className="mt-4 flex items-center justify-between">
