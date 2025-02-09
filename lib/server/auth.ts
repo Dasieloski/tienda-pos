@@ -3,6 +3,7 @@ import { SignJWT, jwtVerify } from 'jose'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '../db'
 import bcrypt from 'bcryptjs'
+import { cookies } from 'next/headers'
 
 const { compare } = bcrypt
 

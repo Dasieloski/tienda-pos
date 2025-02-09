@@ -955,14 +955,14 @@ Causa: [Por favor, especifique la causa de la devolución]`
                                                 )}
                                             </CardContent>
                                         </Card>
-                                        <Card>
+                                       {/*  <Card>
                                             <CardHeader>
-                                                {/* <CardTitle>↩️ Devoluciones</CardTitle> */}
+                                                 <CardTitle>↩️ Devoluciones</CardTitle> 
                                             </CardHeader>
                                             <CardContent>
                                                 <div className="text-2xl font-bold text-red-500">{cashRegister.returns}</div>
                                             </CardContent>
-                                        </Card>
+                                        </Card> */}
                                         <Card>
                                             <CardHeader>
                                                 <CardTitle>💰 Total en Caja</CardTitle>
