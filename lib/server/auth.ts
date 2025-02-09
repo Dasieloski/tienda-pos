@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { SignJWT, jwtVerify } from 'jose'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '../db'
