@@ -288,8 +288,12 @@ export default function EmpleadoPage() {
 
         const checkSession = async () => {
             try {
-                const response = await fetch('/api/empleado/auth/session')
+                const response = await fetch('/api/empleado/auth/session', {
+                    method: 'GET',
+                    credentials: 'same-origin', // Asegura que las cookies se envíen
+                })
                 const data = await response.json()
+                console.log('EmpleadoPage - Session Data:', data)
 
                 if (!isMounted) return
 

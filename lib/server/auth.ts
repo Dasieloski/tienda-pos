@@ -25,9 +25,16 @@ export async function decrypt(input: string): Promise<any> {
     return payload
 }
 
-export async function login(formData: FormData) {
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
+export async function login(data: FormData | { email: string; password: string }) {
+    let email: string, password: string
+
+    if ("get" in data) {
+        email = data.get("email") as string
+        password = data.get("password") as string
+    } else {
+        email = data.email
+        password = data.password
+    }
 
     console.log('Intentando iniciar sesión para:', email)
 
@@ -55,7 +62,7 @@ export async function login(formData: FormData) {
     }
 
     // Crear sesión
-    const session = await encrypt({
+    const sessionToken = await encrypt({
         id: user.id,
         email: user.email,
         role: user.role,
@@ -64,13 +71,13 @@ export async function login(formData: FormData) {
     // Guardar token de refresco
     await db.token.create({
         data: {
-            token: session,
+            token: sessionToken,
             userId: user.id,
             expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 días
         },
     })
 
-    return { success: true, sessionToken: session }
+    return { success: true, sessionToken }
 }
 
 export async function logout() {
