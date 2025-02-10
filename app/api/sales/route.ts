@@ -35,7 +35,7 @@ export async function POST(request: Request) {
         const sale = await prisma.sale.create({
             data: {
                 total: parseFloat(total.toString()),
-                paymentMethod: paymentMethod || 'efectivo',
+                paymentMethod: paymentMethod.toLowerCase(), // → Se transforma a minúsculas
                 status: "completed",
                 updatedAt: new Date(),
                 saleProduct: {
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
                     }
                 }
             }
-        })
+        });
 
         // Registrar en el historial con detalles de productos
         const detallesVenta = `Venta realizada con ID: ${sale.id}, Total: ${total}, Método de Pago: ${paymentMethod}. Productos: ${productDetails.join(', ')}.`

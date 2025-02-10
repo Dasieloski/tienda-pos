@@ -255,6 +255,11 @@ const formatSaleDate = (dateString: string | Date | undefined) => {
     }
 };
 
+const paymentMethodMapping = {
+    efectivo: { text: "Efectivo", emoji: "💵" },
+    tarjeta: { text: "Tarjeta", emoji: "💳" }
+};
+
 export default function EmpleadoPage() {
     const { theme, setTheme } = useTheme()
     const [mounted, setMounted] = useState(false)
@@ -512,36 +517,35 @@ export default function EmpleadoPage() {
         return currentSale.reduce((total, item) => total + (item.price * item.quantity), 0)
     }
 
-    const processSale = async () => {
-        if (currentSale.length === 0) {
-            toast({
-                title: "Error",
-                description: "No hay productos en la venta actual",
-                variant: "destructive"
-            });
-            return;
-        }
+    const processSale = async (method: string) => {
+    if (currentSale.length === 0) {
+        toast({
+            title: "Error",
+            description: "No hay productos en la venta actual",
+            variant: "destructive"
+        });
+        return;
+    }
 
-        setIsProcessing(true);
-        try {
-            // Preparar los productos para la venta
-            const saleProducts = currentSale.map(product => ({
-                productId: product.id,
-                quantity: product.quantity,
-                price: Number(product.price)
-            }));
+    setIsProcessing(true);
+    try {
+        const saleProducts = currentSale.map(product => ({
+            productId: product.id,
+            quantity: product.quantity,
+            price: Number(product.price)
+        }));
 
-            const response = await fetch('/api/sales', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    products: saleProducts,
-                    total: calculateTotal(),
-                    paymentMethod: paymentMethod || "efectivo"
-                })
-            });
+        const response = await fetch('/api/sales', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                products: saleProducts,
+                total: calculateTotal(),
+                paymentMethod: method
+            })
+        });
 
             let errorMessage = 'Error al procesar la venta';
             
@@ -745,16 +749,16 @@ Causa: [Por favor, especifique la causa de la devolución]`
                                                                 Selecciona el método de pago para completar la venta
                                                             </DialogDescription>
                                                         </DialogHeader>
-                                                        <div className="grid grid-cols-2 gap-4">
-                                                            <Button onClick={() => processSale()} className="h-24">
-                                                                💵<br />
-                                                                Efectivo
-                                                            </Button>
-                                                            <Button onClick={() => processSale()} className="h-24">
-                                                                💳<br />
-                                                                Tarjeta
-                                                            </Button>
-                                                        </div>
+                                                      <div className="grid grid-cols-2 gap-4">
+    <Button onClick={() => processSale("efectivo")} className="h-24">
+        💵<br />
+        Efectivo
+    </Button>
+    <Button onClick={() => processSale("tarjeta")} className="h-24">
+        💳<br />
+        Tarjeta
+    </Button>
+</div>
                                                     </DialogContent>
                                                 </Dialog>
                                             </div>
@@ -789,11 +793,7 @@ Causa: [Por favor, especifique la causa de la devolución]`
                                                                     </p>
                                                                 </div>
                                                                 <Badge>
-                                                                    {sale.paymentMethod === "efectivo" ? (
-                                                                        <>efectivo💵</>
-                                                                    ) : (
-                                                                        <>tarjeta💳</>
-                                                                    )}
+                                                                    {paymentMethodMapping[sale.paymentMethod]?.emoji} {paymentMethodMapping[sale.paymentMethod]?.text}
                                                                 </Badge>
                                                             </div>
 
@@ -895,11 +895,7 @@ Causa: [Por favor, especifique la causa de la devolución]`
                                                             <TableCell>${sale.total.toFixed(2)}</TableCell>
                                                             <TableCell>
                                                                 <Badge>
-                                                                    {sale.paymentMethod === "efectivo" ? (
-                                                                        <>efectivo💵</>
-                                                                    ) : (
-                                                                        <>tarjeta💳</>
-                                                                    )}
+                                                                    {paymentMethodMapping[sale.paymentMethod]?.emoji} {paymentMethodMapping[sale.paymentMethod]?.text}
                                                                 </Badge>
                                                             </TableCell>
                                                             <TableCell>
