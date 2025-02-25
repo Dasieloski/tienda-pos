@@ -69,7 +69,7 @@ export default function CheckoutPage() {
       const order = await response.json()
       console.log('Pedido guardado:', order)
 
-      let message = "🛍️ *Nuevo Pedido en 99-Store*\n\n"
+      let message = "🛍️ *Nuevo Pedido en Variedades-Friñón*\n\n"
       message += "👤 *Datos del Cliente:*\n"
       message += `- Nombre: ${name}\n`
       message += `- Teléfono: ${phone}\n\n`
@@ -83,7 +83,7 @@ export default function CheckoutPage() {
 
       message += `\n💰 *Total:* $${total.toFixed(2)}`
       const encodedMessage = encodeURIComponent(message)
-      const phoneNumber = "5354710329" // Sin el '+'
+      const phoneNumber = "5353827067" // Sin el '+'
 
       const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodedMessage}`
       whatsappWindow.location.href = whatsappURL

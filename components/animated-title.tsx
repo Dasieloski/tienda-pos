@@ -12,7 +12,7 @@ export function AnimatedTitle() {
     setIsClient(true)
   }, [])
 
-  const letters = "Reinier-Store".split("")
+  const letters = "Variedades-Friñón".split("")
 
   if (!isClient) return null
 

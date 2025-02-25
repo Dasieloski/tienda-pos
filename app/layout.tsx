@@ -16,7 +16,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Reinier-Store",
+  title: "Variedades el Friñón",
   description: "Tienda especializada en piezas y accesorios para motos en La Habana, Cuba",
   icons: {
     icon: "/icons/moto-icon.svg",
